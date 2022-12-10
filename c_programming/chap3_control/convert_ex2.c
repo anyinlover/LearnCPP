@@ -3,19 +3,19 @@
 
 void convert(char s[], char t[]);
 void convert2(char y[], char s[]);
+int mygetline(char s[], const int lim);
 
 int main()
 {
     char t[MAXLEN];
     char s[MAXLEN];
     char y[MAXLEN];
-    while (scanf("%s", t)) {
-        printf("%s\n", t);
-        convert(s, t);
-        printf("%s\n", s);
-        convert2(y, s);
-        printf("%s\n", y);
-    }
+    mygetline(t, MAXLEN);
+    printf("%s\n", t);
+    convert(s, t);
+    printf("%s\n", s);
+    convert2(y, s);
+    printf("%s\n", y);
 }
 
 void convert(char s[], char t[])
@@ -67,4 +67,16 @@ void convert2(char y[], char s[])
         }
     }
     y[j] = '\0';
+}
+
+int mygetline(char s[], const int lim)
+{
+    int c, i;
+    for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; i++)
+        s[i] = c;
+    
+    if (c == '\n')
+        s[i++] = c;
+    s[i] = '\0';
+    return i;
 }
