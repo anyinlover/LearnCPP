@@ -4,17 +4,12 @@
 #include <math.h>
 #define MAXOP 100
 #define MAXVAL 100
-#define BUFSIZE 100
 #define NUMBER '0'
 
 int sp = 0;
 double val[MAXVAL];
-char buf[BUFSIZE];
-int bufp = 0;
 void push(double f);
 double pop(void);
-int getch(void);
-void ungetch(int);
 int getop(char s[]);
 
 int main()
@@ -27,7 +22,6 @@ int main()
         switch (type) {
         case NUMBER:
             push (atof(s));
-            printf("push %f\n", atof(s));
             break;
         case '+':
             push (pop() + pop());
@@ -75,26 +69,13 @@ double pop(void)
     }
 }
 
-int getch(void)
-{
-    return (bufp > 0) ? buf[--bufp] : getchar();
-}
-
-void ungetch(int c)
-{
-    if (bufp >= BUFSIZE)
-        printf("ungetch: too many characters\n");
-    else
-        buf[bufp++] = c;
-}
-
 int getop(char s[])
 {
-    static int buf;
+    static int buf = EOF;
     int i,c ;
 
     if (buf == EOF || buf == '\t' || buf == ' ')
-        while ((s[0] = c = getch()) == ' ' || c == '\t')
+        while ((s[0] = c = getchar()) == ' ' || c == '\t')
             ;
     else
         s[0] = c = buf;
@@ -103,10 +84,10 @@ int getop(char s[])
         return c;
     i = 0;
     if (isdigit(c))
-        while (isdigit(s[++i] = c = getch()))
+        while (isdigit(s[++i] = c = getchar()))
             ;
     if (c == '.')
-        while (isdigit(s[++i] = c = getch()))
+        while (isdigit(s[++i] = c = getchar()))
             ;
     s[i] = '\0';
     if (c != EOF)
