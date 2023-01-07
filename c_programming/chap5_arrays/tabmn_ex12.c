@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define MAXLEN 1000
+#define N 8
 
 int mygetline(char s[], int lim);
-void detab(char *s, char *ns, int *tabstops);
-void entab(char *s, char *ns, int *tabstops);
+void detab(char *s, char *ns, int m, int n);
+void entab(char *s, char *ns, int m, int n);
 
 int mygetline(char s[], int lim)
 {
@@ -24,28 +25,40 @@ int mygetline(char s[], int lim)
 
 int main(int argc, char *argv[])
 {
+    int m, n, c;
+    m = 0;
+    n = N;
+    while (--argc > 0) {
+        c = (*++argv)[0];
+        switch (c) {
+            case '-':
+                m = atoi(++argv[0]);
+                break;
+            case '+':
+                n = atoi(++argv[0]);
+                break;
+            default:
+                printf("tab: illegal option %c\n", c);
+                break;          
+        }
+    }
     char s[MAXLEN], ns[MAXLEN];
-    int tabstops[argc - 1];
-    int i = 0;
-    while (--argc > 0)
-        tabstops[i++] = atoi(*++argv);
-    tabstops[i] = -1;
     mygetline(s, MAXLEN);
-    detab(s, ns, tabstops);
+    detab(s, ns, m, n);
     printf("%s", ns);
-    entab(ns, s, tabstops);
+    entab(ns, s, m, n);
     printf("%s", s);
 }
 
-void detab(char *s, char *ns, int *tabstops)
+void detab(char *s, char *ns, int m, int n)
 {
     int i;
     i = 0;
     while (*s != '\0') {
-        if (i == *tabstops)
-            tabstops++;
+        if (i == m)
+            m += n;
         if (*s == '\t') {
-            while (i < *tabstops) {
+            while (i < m) {
                 ns[i++] = ' ';
             }
         } else {
@@ -56,14 +69,14 @@ void detab(char *s, char *ns, int *tabstops)
     ns[i] = '\0';
 }
 
-void entab(char *s, char *ns, int *tabstops)
+void entab(char *s, char *ns, int m, int n)
 {
     int i, j;
     i = 0;
     j = 0;
     while (s[i] != '\0') {
-        if (i == *tabstops)
-            tabstops++;
+        if (i == m)
+            m += n;
         if (s[i] != ' ') {
             while (j > 0) {
                 *ns++ = ' ';
@@ -72,7 +85,7 @@ void entab(char *s, char *ns, int *tabstops)
             *ns++ = s[i];
         } else {
             j++;
-            if (i == *tabstops) {
+            if (i == m) {
                 *ns++ = '\t';
                 j = 0;
             }
@@ -81,3 +94,4 @@ void entab(char *s, char *ns, int *tabstops)
     }
     *ns = '\0';
 }
+
