@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #define MAXLEN 1000
 #define MAXLINES 1000
@@ -15,6 +16,8 @@ int numcmpr(char *s1, char *s2);
 int strcmpr(char *s1, char *s2);
 
 int reverse = 0;
+int fold = 0;
+int directory = 0;
 
 int main(int argc, char *argv[])
 {
@@ -29,13 +32,19 @@ int main(int argc, char *argv[])
             case 'r':
                 reverse = 1;
                 break;
+            case 'f':
+                fold = 1;
+                break;
+            case 'd':
+                directory = 1;
+                break;
             default:
                 printf("sort: illegal option %c\n", c);
                 argc = 0;
                 break;
             }
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-        myqsort(lineptr, 0, nlines - 1, 
+        myqsort(lineptr, 0, nlines - 1,
             (int (*)(void *, void *))(numeric ? numcmpr : strcmpr));
         writelines(lineptr, nlines);
         return 0;
@@ -128,12 +137,31 @@ int numcmpr(char *s1, char *s2)
 
 int strcmpr(char *s1, char *s2)
 {
-    int i, r;
-    for (i = 0; s1[i] == s2[i]; i++)
-        if (s1[i] == '0')
-            r = 0;
-        else
-            r = s1[i] - s2[i];
+    char c1, c2;
+    int r;
+    c1 = 0;
+    c2 = 0;
+    while (c1 == c2) {
+        c1 = *s1++;
+        c2 = *s2++;
+        if (directory) {
+            while (c1 != '\0' && !isalnum(c1) && !isblank(c1))
+                c1 = *s1++;
+            while (c2 != '\0' && !isalnum(c2) && !isblank(c2))
+                c2 = *s2++;
+        }
+        if (fold) {
+            if isupper(c1)
+                c1 += 'a' - 'A';
+            if isupper(c2)
+                c2 += 'a' - 'A';
+        }
+    }
+    if (c1 == '\0')
+        r = 0;
+    else
+        r = c1 - c2;
     return reverse ? -r : r;
 }
+
 
