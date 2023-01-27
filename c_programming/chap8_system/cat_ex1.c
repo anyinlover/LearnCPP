@@ -1,6 +1,11 @@
-#include "unistd.h"
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 void filecopy(int f1, int f2);
+void error(char *fmt, ...);
 
 int main(int argc, char *argv[])
 {
@@ -29,4 +34,16 @@ void filecopy(int f1, int f2)
             error("cp: write error");
             exit(2);
         }
+}
+
+void error(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    fprintf(stderr, "error: ");
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+    exit(1);
 }
