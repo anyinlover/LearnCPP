@@ -11,18 +11,20 @@ char *lineptr[MAXLINES];
 
 int readlines(char *lineptr[], int nlines);
 void writelines(char *lineptr[], int nlines);
-void myqsort(void *lineptr[], int left, int right, int (*comp) (void *, void *, void *, void *));
+void myqsort(char *lineptr[], int left, int right, int (*comp) (char *, char *));
 int mygetline(char *s, int lim);
-void swap(void *v[], int i, int j);
+void swap(char *v[], int i, int j);
 int numcmpr(char *s1, char *s2);
 int strcmpr(char *s1, char *s2);
-int linecmp(char *s1, char *s2, char *s1f, char *s2f);
+int linecmp(char *s1, char *s2);
 
 int reverses[FIELDNUM];
 int folds[FIELDNUM];
 int directories[FIELDNUM];
 int numerics[FIELDNUM];
-int i;
+char field1[MAXLEN];
+char field2[MAXLEN];
+int idx;
 
 int main(int argc, char *argv[])
 {
@@ -51,7 +53,7 @@ int main(int argc, char *argv[])
     }
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
         myqsort(lineptr, 0, nlines - 1,
-            (int (*)(void *, void *, void *, void *))(linecmp));
+            (int (*)(char *, char *))(linecmp));
         writelines(lineptr, nlines);
         return 0;
     } else {
@@ -102,27 +104,25 @@ void writelines(char *lineptr[], int nlines)
         printf("%s\n", *lineptr++);
 }
 
-void myqsort(void *v[], int left, int right,
-            int (*comp)(void *, void *, void *, void *))
+void myqsort(char *v[], int left, int right,
+            int (*comp)(char *, char *))
 {
-    static char s1field[MAXLEN];
-    static char s2field[MAXLEN];
     int i, last;
     if (left >= right)
         return;
     swap(v, left, (left+right)/2);
     last = left;
     for (i = left + 1; i <= right; i++)
-        if ((*comp)(v[i], v[left], s1field, s2field) < 0)
+        if ((*comp)(v[i], v[left]) < 0)
             swap(v, ++last, i);
     swap(v, left, last);
     myqsort(v, left, last - 1, comp);
     myqsort(v, last+1, right, comp);
 }
 
-void swap(void *v[], int i, int j)
+void swap(char *v[], int i, int j)
 {
-    void *temp;
+    char *temp;
     temp = v[i];
     v[i] = v[j];
     v[j] = temp;
@@ -140,7 +140,7 @@ int numcmpr(char *s1, char *s2)
         r = 1;
     else
         r = 0;
-    return reverses[i] ? -r : r;
+    return reverses[idx] ? -r : r;
 }
 
 int strcmpr(char *s1, char *s2)
@@ -152,13 +152,13 @@ int strcmpr(char *s1, char *s2)
     while (c1 == c2) {
         c1 = *s1++;
         c2 = *s2++;
-        if (directories[i]) {
+        if (directories[idx]) {
             while (c1 != '\0' && !isalnum(c1) && !isblank(c1))
                 c1 = *s1++;
             while (c2 != '\0' && !isalnum(c2) && !isblank(c2))
                 c2 = *s2++;
         }
-        if (folds[i]) {
+        if (folds[idx]) {
             if isupper(c1)
                 c1 += 'a' - 'A';
             if isupper(c2)
@@ -169,23 +169,25 @@ int strcmpr(char *s1, char *s2)
         r = 0;
     else
         r = c1 - c2;
-    return reverses[i] ? -r : r;
+    return reverses[idx] ? -r : r;
 }
 
-int linecmp(char *s1, char *s2, char *s1field, char *s2field)
+int linecmp(char *s1, char *s2)
 {
     int r;
     char *s1b, *s2b;
-    for (i = 0; i < FIELDNUM; i++) {
-        s1b = s1field;
-        s2b = s2field;
-        for (*s1field = *s1++; *s1field != '\t' && *s1field != '\0'; s1field++)
-            *s1field = *s1++;
-        *s1field++ = '\0';
-        for (*s2field = *s2++; *s2field != '\t' && *s2field != '\0'; s2field++)
-            *s2field = *s2++;
-        *s2field++ = '\0';
-        r = numerics[i] ? numcmpr(s1b, s2b) : strcmpr(s1b, s2b);
+    for (idx = 0; idx < FIELDNUM; idx++) {
+        s1b = field1;
+        s2b = field2;
+        while (*s1 != '\t' && *s1 != '\0')
+            *s1b++ = *s1++;
+        *s1b = '\0';
+        s1++;
+        while (*s2 != '\t' && *s2 != '\0')
+            *s2b++ = *s2++;
+        *s2b = '\0';
+        s2++;
+        r = numerics[idx] ? numcmpr(field1, field2) : strcmpr(field1, field2);
         if (r != 0)
             return r;
     }
