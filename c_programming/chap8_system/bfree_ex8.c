@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <stdio.h>
+#include <limits.h>
 #define NALLOC 1024
 
 typedef long Align;
@@ -18,16 +20,12 @@ static Header *freep = NULL;
 void *mymalloc(unsigned nbytes);
 static Header *morecore(unsigned nu);
 void myfree(void *ap);
-void *mycalloc(unsigned n, size_t size);
+void *bfree(void *p, size_t n);
 
 int main()
 {
-    char a[3] = {'a','b','c'};
-    char *p;
-    p = mycalloc(3, sizeof(char));
-    *p = *a;
-    write(1, p, 1);
-    myfree(p);
+    static char a[3] = {'a','b','c'};
+    bfree(a, 3);
     return 0;
 }
 
@@ -37,6 +35,9 @@ void *mymalloc(unsigned nbytes)
     Header *morecore(unsigned);
     unsigned nunits;
 
+    if (nbytes == 0 || nbytes > UINT_MAX - sizeof(Header)) {
+        fprintf(stderr, "Error: invalid nbytes size request %d\n", nbytes);
+    }
     nunits = (nbytes + sizeof(Header) - 1) /sizeof(Header) + 1;
     if ((prevp = freep) == NULL) {
         base.s.ptr = freep = prevp = &base;
@@ -78,9 +79,18 @@ static Header *morecore(unsigned nu)
 
 void myfree(void *ap)
 {
+    if (ap == NULL) {
+        fprintf(stderr, "Error: null pointer passed to myfree.\n");
+        return;
+    }
     Header *bp, *p;
 
     bp = (Header *)ap - 1;
+    if (bp->s.size == 0) {
+        fprintf(stderr, "Error: can't free size 0.\n");
+        return;
+    }
+
     for (p = freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
         if (p >= p->s.ptr && (bp > p || bp < p->s.ptr))
             break;
@@ -97,12 +107,11 @@ void myfree(void *ap)
     freep = p;
 }
 
-void *mycalloc(unsigned n, size_t size)
+void *bfree(void *p, size_t n)
 {
-    char *p;
-    if ((p = mymalloc(n * size)) == NULL)
+    if (n < sizeof(Header))
         return NULL;
-    for (unsigned i = 0; i < n * size; i++)
-        p[i] = '\0';
-    return p;
+    Header *bp = (Header *)p;
+    bp->s.size = n / sizeof(Header);
+    myfree(bp + 1);
 }
